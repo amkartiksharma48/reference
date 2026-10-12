@@ -1,0 +1,5 @@
+Windows flow-
+Computer name/more..Domain--> Static IP local server-->DNS(install dns service from add roles)-->PROMOTING ADDS-Install ADDS-->Upgrade dns to DC(inside AD DS on SM) Click on link-->Install and then-->Go to DNS server manager and create the _msdcs domain inside your Forward zone domain, them DC domain inside it then RC inside it and other new record. Choose Srv and Ldap protocol and write your FQDN in host
+
+NOW CONNECT CLIENT-
+Go to settings-->system-->about-->advanced system settings-->Computer-->change-->to change its workgroup or domain-->click domain and provide domain name OK.
