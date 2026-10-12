@@ -50,6 +50,157 @@ echo "SMTP test mail" | mail -s "SMTP Test" user2
 su - user2
 mail
 
+
+
+
+# SMTP (Postfix) Practical on CentOS 9
+
+## Part 1: Configure SMTP Server
+
+```bash
+dnf install postfix -y
+vim /etc/postfix/main.cf
+```
+
+Configure the following parameters in `main.cf`:
+
+```ini
+myhostname = master.kartik.com
+mydomain = kartik.com
+myorigin = $mydomain
+```
+
+Ensure the FQDN and domain resolve correctly through DNS.
+
+Configure `mydestination`:
+
+```ini
+mydestination = $myhostname, localhost.$mydomain, localhost, $mydomain
+```
+
+Configure `inet_interfaces`:
+
+```ini
+inet_interfaces = all
+```
+
+Configure `mynetworks` using the actual network subnet:
+
+```ini
+mynetworks = 192.168.178.0/24, 127.0.0.0/8
+```
+
+Save and exit:
+
+```text
+Esc
+:wq
+```
+
+Restart and enable Postfix:
+
+```bash
+systemctl restart postfix
+systemctl enable postfix
+systemctl status postfix
+```
+
+Allow SMTP through the firewall:
+
+```bash
+firewall-cmd --permanent --add-service=smtp
+firewall-cmd --reload
+```
+
+## Part 2: Install Mutt and Prepare Mailboxes
+
+```bash
+dnf install mutt -y
+cd /var/spool/mail
+ls
+touch root
+```
+
+Create two Linux users:
+
+```bash
+useradd user1
+passwd user1
+useradd user2
+passwd user2
+```
+
+## Part 3: Send Mail from User1 to User2 Using Mutt
+
+Terminal 1:
+
+```bash
+su - user1
+mutt
+```
+
+If prompted to create `/home/user1/Mail`, enter `yes`.
+
+Inside Mutt:
+
+1. Press `m` to compose a message.
+2. Enter recipient: `user2@kartik.com`
+3. Enter the subject.
+4. Write the message.
+5. Save and exit the editor. If using Vim, press `Esc`, type `:wq`, and press Enter.
+6. Confirm sending if prompted.
+
+Terminal 2:
+
+```bash
+su - user2
+mutt
+```
+
+If prompted to create `/home/user2/Mail`, enter `yes`.
+
+Open the inbox and check the message.
+
+## Part 4: Send Mail from Root to User2 Using Telnet
+
+Install Telnet as root:
+
+```bash
+su -
+dnf install telnet -y
+```
+
+Switch to user1 and connect to the SMTP server:
+
+```bash
+su - user1
+telnet kartik.com 25
+```
+
+Enter each SMTP command individually:
+
+```text
+EHLO localhost
+MAIL FROM:<root@kartik.com>
+RCPT TO:<user2@kartik.com>
+DATA
+Subject: Mail from root
+
+Hello user2, how are you?
+.
+QUIT
+```
+
+Check the SMTP responses. A `250 2.0.0 Ok: queued as ...` response means Postfix accepted the message into its queue.
+
+In Terminal 2, check the recipient's mailbox:
+
+```bash
+mutt
+```
+
+Open the email with the subject `Mail from root`.
+
 # NOTE
 # Replace mail.itiss.com, itiss.com and the mynetworks subnet
 # with the actual values used in your lab.
