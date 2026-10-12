@@ -1,0 +1,9 @@
+New-NetFirewallRule -DisplayName "FTP Passive Data Ports" -Direction Inbound -Protocol TCP -LocalPort 5000-5100 -Action Allow -Profile Any
+
+
+IIS → Sites → NEWFTPsite → FTP Firewall Support       Data Channel Port Range:
+5000-5100
+
+New-NetFirewallRule -DisplayName "FTP Passive Data Ports" -Direction Inbound -Protocol TCP -LocalPort 5000-5100 -Action Allow -Profile Any
+
+New-NetFirewallRule -DisplayName "FTP Port 21" -Direction Inbound -Protocol TCP -LocalPort 21 -Action Allow

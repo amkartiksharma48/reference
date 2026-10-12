@@ -1,0 +1,70 @@
+# DFS (Distributed File System) Practical
+
+## 1. Install DFS
+1. Open Server Manager → Manage → Add Roles and Features.
+2. Select Role-based or feature-based installation.
+3. Select the server `MASTER`.
+4. Expand File and Storage Services → File and iSCSI Services.
+5. Select DFS Namespaces and DFS Replication.
+6. Install the selected services.
+
+## 2. Create and Share Physical Folders
+1. Create two folders on the C: drive:
+   - `C:\DFSshare1`
+   - `C:\DFSshare2`
+2. Right-click each folder → Properties → Sharing → Advanced Sharing.
+3. Tick Share this folder.
+4. Click Permissions → Add `Domain Users`.
+5. Grant Read and Change permissions.
+6. Click Apply → OK.
+7. Open the Security tab and ensure Domain Users have appropriate NTFS permissions.
+
+Network paths:
+- `\\MASTER\DFSshare1`
+- `\\MASTER\DFSshare2`
+
+## 3. Create a DFS Namespace
+1. Open Server Manager → Tools → DFS Management.
+2. Right-click Namespaces → New Namespace.
+3. Enter `MASTER` as the Namespace Server.
+4. Enter `DFSnamespace01` as the Namespace Name.
+5. Click Edit Settings if permissions or the local folder path need to be changed.
+6. Select Domain-based namespace.
+7. Review the settings and click Create.
+
+Namespace path:
+`\\itiss.com\DFSnamespace01`
+
+## 4. Create the First DFS Folder Link
+1. In DFS Management, expand Namespaces.
+2. Right-click `\\itiss.com\DFSnamespace01` → New Folder.
+3. Enter the folder link name: `DFSshare1`.
+4. Click Add.
+5. Enter or browse to the folder target: `\\MASTER\DFSshare1`.
+6. Click OK to add the target and OK again to create the link.
+
+## 5. Create the Second DFS Folder Link
+1. Right-click `\\itiss.com\DFSnamespace01` → New Folder.
+2. Enter the folder link name: `DFSshare02`.
+3. Click Add.
+4. Enter or browse to the actual second shared-folder path: `\\MASTER\DFSshare2`.
+5. Click OK to add the target and OK again to create the link.
+
+Note: The DFS link name `DFSshare02` can differ from the actual share name `DFSshare2`.
+
+## 6. Test DFS on the Server
+1. Press Win + R.
+2. Enter `\\itiss.com\DFSnamespace01`.
+3. Press Enter.
+4. Confirm that both DFS folder links are visible and open correctly.
+
+## 7. Test DFS on the Client
+1. Start the Windows client VM.
+2. Ensure it can communicate with MASTER and resolve the `itiss.com` domain.
+3. Open File Explorer.
+4. Enter `\\itiss.com\DFSnamespace01`.
+5. Open both folder links and verify that their contents are accessible.
+
+Result: The DFS Namespace was created successfully, and we confirmed that the client could access it.
+
+Note: DFS Replication was installed, but we did not configure a replication group. That requires at least two Windows Server replication members.

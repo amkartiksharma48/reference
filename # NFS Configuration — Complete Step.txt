@@ -1,0 +1,176 @@
+# NFS Configuration — Complete Steps
+
+## PART 1: Create a New Hard Disk on Windows Server
+
+1. Shut down the Windows Server VM.
+2. Open VMware Workstation → VM Settings → Add → Hard Disk.
+3. Select **Create a new virtual disk**.
+4. Set the size to 5 GB.
+5. Name it `NFSdisk.vmdk` and finish.
+6. Start the Windows Server VM.
+
+## PART 2: Initialize and Format the Disk
+
+1. Press `Win + R`, type `diskmgmt.msc`, and press Enter.
+2. Right-click the new disk (e.g., Disk 1 — Unknown, Not Initialized).
+3. Select **Initialize Disk**.
+4. Choose GPT and click OK.
+5. Right-click the unallocated space → **New Simple Volume**.
+6. Use the available space.
+7. Assign drive letter `E:`.
+8. Select NTFS, Default allocation unit size, and enable Quick Format.
+9. Finish the wizard.
+
+The new disk is now available as `E:\`.
+
+## PART 3: Install NFS Server
+
+1. Open Server Manager → Add Roles and Features.
+2. Navigate to:
+   `Server Roles → File and Storage Services → File and iSCSI Services`
+3. Select **Server for NFS**.
+4. Install it.
+
+## PART 4: Create NFS Share 1 — WinDrive
+
+1. Open Server Manager → File and Storage Services → Shares.
+2. Select the **Tasks dropdown under MASTER** (not the one under the volume).
+3. Click **New Share**.
+4. Select **NFS Share – Quick**.
+5. Set:
+   - Local path: `E:\`
+   - Share name: `WinDrive`
+6. Configure authentication:
+   - No server authentication (AUTH_SYS)
+   - Allow unmapped user access by UID/GID
+7. Configure NFS Share Permissions:
+   - Host: `192.168.178.101` (Windows client IP)
+   - Permission: Read-Only
+   - Root Access: Disallowed
+8. Leave the NTFS permissions unchanged, as we did.
+9. Finish creating the share.
+
+## PART 5: Create NFS Share 2 — 2nd_Share
+
+1. Go to Server Manager → File and Storage Services → Shares.
+2. Select MASTER → Tasks → New Share → NFS Share – Quick.
+3. Set:
+   - Local path: `C:\money`
+   - Share name: `2nd_Share`
+4. Configure NFS Share Permissions:
+   - Host: All Machines
+   - Permission: Read/Write
+   - Root Access: Disallowed
+5. Finish creating the share.
+
+## PART 6: Create NFS Share 3 — 3rd_share
+
+1. Create another NFS Share – Quick.
+2. Set:
+   - Local path: `C:\honey`
+   - Share name: `3rd_share`
+3. Configure NFS Share Permissions:
+   - Host: All Machines
+   - Permission: Read-Only
+4. Finish creating the share.
+
+## PART 7: Install NFS Client on Windows Client
+
+1. Open Control Panel → Programs → Programs and Features.
+2. Click **Turn Windows features on or off**.
+3. Expand **Services for NFS**, if shown.
+4. Enable **Client for NFS**.
+5. Click OK and wait for installation to finish.
+
+## PART 8: Mount NFS Shares on Windows Client
+
+1. Open Command Prompt as Administrator on the Windows client.
+2. Mount WinDrive as G::
+
+   `mount -o anon \\192.168.178.10\WinDrive G:`
+
+3. Mount 2nd_Share as H::
+
+   `mount -o anon \\192.168.178.10\2nd_Share H:`
+
+4. Mount 3rd_share as P::
+
+   `mount -o anon \\192.168.178.10\3rd_share P:`
+
+5. Open File Explorer → This PC to verify the drive letters.
+
+Mappings:
+- `WinDrive` → `G:`
+- `2nd_Share` → `H:`
+- `3rd_share` → `P:`
+
+## PART 9: Install NFS Utilities on Linux Client
+
+1. Open a terminal on the Linux client.
+2. If sudo is available, run:
+
+   `sudo dnf install nfs-utils -y`
+
+3. Otherwise, become root:
+
+   `su -`
+
+   Then run:
+
+   `dnf install nfs-utils -y`
+
+## PART 10: Verify Linux Connectivity and NFS Exports
+
+1. Test connectivity to the server:
+
+   `ping 192.168.178.10`
+
+2. List the server's NFS exports:
+
+   `showmount -e 192.168.178.10`
+
+3. Use the exact export paths shown by the command for mounting.
+
+## PART 11: Mount NFS Shares on Linux Client
+
+1. Become root if necessary.
+2. Create the mount points:
+
+   `mkdir -p /win_drive /money /honey`
+
+3. Mount the first share using the export path shown by `showmount`. For example:
+
+   `mount -t nfs 192.168.178.10:/WinDrive /win_drive`
+
+4. Mount the other two exports using their exact paths and the required mount points:
+   - `2nd_Share` → `/money`
+   - `3rd_share` → `/honey`
+
+5. Verify the mounts:
+
+   `df -h`
+
+   or:
+
+   `mount | grep nfs`
+
+## PART 12: Permanent Mounting
+
+### Linux
+
+After testing the mounts, add the three corresponding NFS export paths and mount points to `/etc/fstab` to make them mount automatically at boot.
+
+### Windows
+
+The `mount` commands above successfully mount shares, but persistence across reboot has not yet been configured or verified. Configure an appropriate automatic remount mechanism if the assignment requires permanent Windows mounts.
+
+## Important Concepts
+
+- **NFS Server:** Shares files and directories over the network.
+- **NFS Client:** Accesses the server's shared files.
+- **NFS Share Permissions:** Control which client hosts may access a share and their permitted access level.
+- **Mounting:** Makes a remote filesystem available at a local drive letter (Windows) or directory (Linux).
+- **Authentication:** We used no server authentication (AUTH_SYS) and allowed unmapped UID/GID access. Share permissions and NTFS permissions still affect access.
+
+**Server IP:** `192.168.178.10`
+**Windows client IP used for WinDrive:** `192.168.178.101`

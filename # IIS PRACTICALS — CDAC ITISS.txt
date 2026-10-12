@@ -1,0 +1,206 @@
+# IIS PRACTICALS — CDAC ITISS
+
+## 1. INSTALL IIS
+
+1. Open Server Manager.
+2. Go to Manage → Add Roles and Features.
+3. Select Role-based or feature-based installation.
+4. Select your server.
+5. Under Server Roles, select Web Server (IIS).
+6. Click Next and Install.
+7. Open IIS Manager using `inetmgr`.
+
+## 2. CREATE A BASIC WEBSITE
+
+1. Open `C:\inetpub\wwwroot`.
+2. Create `index.html` and add your HTML content.
+3. Open a browser and visit `http://localhost`.
+4. If required, check Default Document in IIS and ensure `index.html` is enabled.
+
+## 3. CREATE WEBSITE — kartik.com
+
+1. Create the folder `C:\kartik website`.
+2. Create an `index.html` file inside it.
+3. In IIS Manager, right-click Sites → Add Website.
+4. Enter:
+
+   Site name: `kartik website`  
+   Physical path: `C:\kartik website`  
+   Type: `http`  
+   IP address: `All Unassigned`  
+   Port: `80`  
+   Host name: `kartik.com`
+
+5. Click OK and ensure the website is started.
+
+### Configure DNS
+
+1. Open Server Manager → Tools → DNS.
+2. Expand Forward Lookup Zones.
+3. Right-click → New Zone.
+4. Select Primary Zone and enter `kartik.com`.
+5. Right-click the new zone → New Host (A or AAAA).
+6. Leave Name blank and enter the server's IPv4 address.
+7. Click Add Host.
+
+### Test
+
+Run:
+
+`nslookup kartik.com`
+
+Open `http://kartik.com` from the server and client.
+
+## 4. CREATE WEBSITE — kartik.itiss.com
+
+### Configure DNS
+
+1. Open DNS Manager → Forward Lookup Zones → `itiss.com`.
+2. Right-click the zone → New Host (A or AAAA).
+3. Enter:
+
+   Name: `kartik`  
+   IP address: Server IPv4 address
+
+4. Click Add Host.
+
+### Configure IIS
+
+1. Create `C:\kartik-itiss`.
+2. Create an `index.html` file inside it.
+3. Right-click Sites → Add Website.
+4. Enter:
+
+   Site name: `kartik itiss website`  
+   Physical path: `C:\kartik-itiss`  
+   Type: `http`  
+   IP address: `All Unassigned`  
+   Port: `80`  
+   Host name: `kartik.itiss.com`
+
+5. Click OK and start the website.
+6. Test `http://kartik.itiss.com` from the server and client.
+
+## 5. ADD TWO BINDINGS TO ONE WEBSITE
+
+Goal: Access the same website through `domain.com` and `www.domain.com`.
+
+### First binding
+
+1. Select the website in IIS Manager.
+2. Click Bindings in the Actions panel.
+3. Click Add.
+4. Enter:
+
+   Type: `http`  
+   IP address: `All Unassigned`  
+   Port: `80`  
+   Host name: `domain.com`
+
+5. Click OK.
+
+### Second binding
+
+1. Go to Bindings → Add.
+2. Enter:
+
+   Type: `http`  
+   IP address: `All Unassigned`  
+   Port: `80`  
+   Host name: `www.domain.com`
+
+3. Click OK.
+
+### Configure DNS
+
+Inside the `domain.com` zone, create or verify these A records:
+
+- Root record (`domain.com`) → Server IPv4 address
+- `www` → Server IPv4 address
+
+Test:
+
+- `http://domain.com`
+- `http://www.domain.com`
+
+Both bindings point to the same IIS website and physical folder.
+
+## 6. CREATE A VIRTUAL DIRECTORY
+
+1. Select the website in IIS Manager.
+2. Right-click it → Add Virtual Directory.
+3. Enter:
+
+   Alias: `random`  
+   Physical path: `C:\Virtual directory example`
+
+4. Click OK.
+5. Create an `index.html` file inside the physical folder.
+6. Test:
+
+   `http://kartik.itiss.com/random`
+
+If HTTP Error 403.14 appears, check whether the folder contains a default document such as `index.html`.
+
+## 7. APPLICATION POOLS
+
+1. Open IIS Manager.
+2. Click Application Pools.
+3. View the available application pools.
+4. To check a website's assigned pool, select the website → Basic Settings.
+5. View or change the Application Pool setting.
+
+Remember:
+- An application pool provides an isolated execution environment.
+- Multiple websites can share an application pool.
+- IIS worker processes commonly run as `w3wp.exe`.
+
+## 8. BLOCK A SPECIFIC IP ADDRESS
+
+1. Select the website in IIS Manager.
+2. Open IP Address and Domain Restrictions.
+3. Click Add Deny Entry.
+4. Enter the IP address to block.
+5. Click OK.
+6. Test from that client.
+
+## 9. DENY ALL IPS BY DEFAULT AND ALLOW A SPECIFIC IP
+
+1. Select the website.
+2. Open IP Address and Domain Restrictions.
+3. Click Edit Feature Settings.
+4. Set Access for unspecified clients to Deny.
+5. Click OK.
+6. Click Add Allow Entry.
+7. Enter the permitted client's IP address.
+8. Click OK.
+
+Example:
+
+Default action: DENY  
+`192.168.178.50`: ALLOW  
+All other IPs: DENY
+
+Test from the allowed client and another client.
+
+## IMPORTANT CONCEPTS
+
+- DNS resolves a hostname to an IP address.
+- IIS bindings decide which website handles a request.
+- All Unassigned means IIS accepts requests on applicable local IP addresses.
+- Name-based virtual hosting allows different hostnames to share the same IP and port.
+- A virtual directory maps a URL alias to a physical folder.
+- An application pool provides an execution environment for applications.
+- IP restrictions control which client IPs can access a website.
+
+## TESTING COMMANDS
+
+`nslookup kartik.com`
+
+`nslookup kartik.itiss.com`
+
+`ping kartik.com`
+
+`ping kartik.itiss.com`
+
+Finally, test the website URLs in a browser. Ping alone does not confirm that IIS is serving the website correctly.

@@ -1,0 +1,67 @@
+dnf install bind bind-utils -y
+
+nmtui
+# Set static IP: 192.168.178.138/24
+# Gateway: 192.168.178.2
+# DNS: 192.168.178.138, 192.168.178.2
+# Search domain: kartik.com
+# Save and reactivate the connection
+
+hostnamectl set-hostname master.kartik.com
+
+systemctl enable --now named
+
+vim /etc/named.conf
+zone "kartik.com" IN {
+    type master;
+    file "for.kartik.com";
+    allow-update { none; };
+};
+
+zone "178.168.192.in-addr.arpa" IN {
+    type master;
+    file "rev.kartik.com";
+    allow-update { none; };
+};
+
+cd /var/named/
+
+cp -arfv named.localhost for.kartik.com
+
+ls -l
+
+vim for.kartik.com
+
+Keep the existing $TTL and SOA structure. Change the SOA names and add these records after the SOA section:
+@       IN      SOA     master.kartik.com. any.gmail.com. (
+@       IN      NS      master.kartik.com.
+master  IN      A       192.168.178.138
+@       IN      A       192.168.178.138
+
+cp -arfv for.kartik.com rev.kartik.com
+
+vim rev.kartik.com
+
+Keep the existing SOA structure. Replace the forward records after the SOA section with:
+@       IN      NS      master.kartik.com.
+138     IN      PTR     master.kartik.com.
+
+named-checkconf -z
+
+systemctl restart named
+
+systemctl status named
+
+systemctl enable named
+
+host -t a kartik.com
+
+host -t a master.kartik.com
+
+host 192.168.178.138
+
+dig @127.0.0.1 kartik.com A
+
+dig @127.0.0.1 -x 192.168.178.138
+
+cat /etc/resolv.conf

@@ -1,0 +1,111 @@
+SHARED HOSTING ON LINUX (WITHOUT BIND DNS)
+
+Install and start Apache
+
+```bash
+dnf install httpd -y
+systemctl enable --now httpd
+```
+
+Create two website directories
+
+```bash
+mkdir -p /var/www/html/kittu.com
+mkdir -p /var/www/html/sharma.com
+```
+
+Create index.html files
+
+```bash
+echo "<h1>Welcome to Kittu Website</h1>" > /var/www/html/kittu.com/index.html
+echo "<h1>Welcome to Sharma Website</h1>" > /var/www/html/sharma.com/index.html
+```
+
+Configure Virtual Hosts
+
+```bash
+vim /etc/httpd/conf.d/sites.conf
+```
+
+```apache
+<VirtualHost *:80>
+    ServerName kittu.com
+    ServerAlias www.kittu.com
+    DocumentRoot /var/www/html/kittu.com
+</VirtualHost>
+
+<VirtualHost *:80>
+    ServerName sharma.com
+    ServerAlias www.sharma.com
+    DocumentRoot /var/www/html/sharma.com
+</VirtualHost>
+```
+
+Save and exit: Press `Esc`, type `:wq`, and press Enter.
+
+Test and restart Apache
+
+```bash
+httpd -t
+systemctl restart httpd
+```
+
+Configure firewall
+
+```bash
+firewall-cmd --permanent --add-service=http
+firewall-cmd --reload
+```
+
+Configure `/etc/hosts` on the server
+
+```bash
+vim /etc/hosts
+```
+
+Add:
+
+```text
+192.168.206.151  kittu.com www.kittu.com sharma.com www.sharma.com
+```
+
+Save and exit: Press `Esc`, type `:wq`, and press Enter.
+
+Configure `/etc/hosts` on the client
+
+```bash
+sudo vim /etc/hosts
+```
+
+Add:
+
+```text
+192.168.206.151  kittu.com www.kittu.com sharma.com www.sharma.com
+```
+
+Save and exit: Press `Esc`, type `:wq`, and press Enter.
+
+Test name resolution
+
+```bash
+getent hosts kittu.com
+getent hosts sharma.com
+getent hosts www.kittu.com
+getent hosts www.sharma.com
+```
+
+Test websites on the server
+
+```bash
+curl http://kittu.com
+curl http://sharma.com
+curl http://www.kittu.com
+curl http://www.sharma.com
+```
+
+Open in the client browser:
+
+- http://kittu.com
+- http://www.kittu.com
+- http://sharma.com
+- http://www.sharma.com

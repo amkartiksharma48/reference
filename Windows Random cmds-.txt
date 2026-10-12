@@ -1,0 +1,109 @@
+Windows Random cmds-
+
+Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0
+Start-Service sshd
+
+firewall inbound rule New-NetFirewallRule -Name "OpenSSH-Server-In-TCP" -DisplayName "OpenSSH Server (TCP-In)" -Enabled True -Direction Inbound -Protocol TCP -LocalPort 22 -Action Allow
+
+
+# Windows Server 2022 – AD DS Setup, Domain Controller Promotion, and Client Joining
+
+## PART 1: Prepare Windows Server
+1. Install Windows Server 2022 with Desktop Experience.
+2. Set the Administrator password.
+3. Open Server Manager → Local Server.
+4. Rename the computer to `MASTER` and restart.
+5. Open System Properties → Computer Name → Change → More.
+6. Set Primary DNS suffix to `itiss.com`. Keep “Change primary DNS suffix when domain membership changes” checked.
+7. Configure a static IPv4 address, subnet mask, gateway, and DNS settings.
+8. Verify using:
+   `ipconfig /all`
+
+## PART 2: Install AD DS and DNS Roles
+1. Open Server Manager → Manage → Add Roles and Features.
+2. Select Role-based or feature-based installation.
+3. Select the server.
+4. Check Active Directory Domain Services (AD DS).
+5. Click Add Features when prompted.
+6. Select DNS Server if it is not already installed.
+7. Keep the automatically selected management tools and features.
+8. Click Next → Install.
+
+## PART 3: Promote the Server to a Domain Controller
+1. In Server Manager, click the notification flag.
+2. Select Promote this server to a domain controller.
+3. Select “Add a new forest”.
+4. Enter the Root domain name: `itiss.com`.
+5. Under Domain Controller Options, configure:
+   - Forest functional level: Windows Server 2016
+   - Domain functional level: Windows Server 2016
+   - DNS Server: Checked
+   - Global Catalog (GC): Checked
+   - Read Only Domain Controller (RODC): Unchecked
+6. Set and confirm the DSRM password.
+7. On DNS Options, leave “Create DNS delegation” unchecked.
+8. Under Additional Options, keep the NetBIOS domain name as `ITISS`.
+9. Keep the default paths:
+   - Database folder: `C:\Windows\NTDS`
+   - Log files folder: `C:\Windows\NTDS`
+   - SYSVOL folder: `C:\Windows\SYSVOL`
+10. Click Next through the remaining pages.
+11. Wait for prerequisite checks to pass, then click Install.
+12. The server will restart automatically.
+13. Log in using `ITISS\Administrator`.
+
+## PART 4: Verify DNS
+1. Open Server Manager → Tools → DNS.
+2. Expand the server → Forward Lookup Zones.
+3. Verify that the `itiss.com` zone exists.
+4. Check that the required host and Active Directory SRV records are present.
+5. Open CMD and run:
+   `nslookup MASTER.itiss.com`
+   `nslookup -type=SRV _ldap._tcp.dc._msdcs.itiss.com`
+
+Note: AD DS normally registers the required SRV records automatically. Manual SRV record creation is not normally required.
+
+## PART 5: Configure the Windows 10 Client
+1. Start the Windows 10 client VM.
+2. Ensure the client and server use compatible VMware networks.
+3. Open CMD and run:
+   `ipconfig /all`
+4. Set the client's Preferred DNS server to the Windows Server's actual static IP address. In our lab, this was `192.168.178.138` (verify it is still correct).
+5. Flush the DNS cache:
+   `ipconfig /flushdns`
+6. Test name resolution:
+   `nslookup MASTER.itiss.com`
+   `nslookup itiss.com`
+
+## PART 6: Join the Client to the Domain
+1. On the Windows 10 client, open Settings → System → About → Advanced system settings, or run `sysdm.cpl`.
+2. Open the Computer Name tab → Change.
+3. Under Member of, select Domain.
+4. Enter `itiss.com` and click OK.
+5. Enter domain credentials when prompted:
+   Username: `ITISS\Administrator`
+   Password: Domain Administrator password.
+6. Wait for the welcome message confirming the client joined the domain.
+7. Click OK and restart the client.
+
+## PART 7: Verify Domain Membership
+1. At the login screen, select Other user.
+2. Log in using `ITISS\Administrator` or another domain account.
+3. Open CMD and run:
+   `whoami`
+   `systeminfo | findstr /B /C:"Domain"`
+4. Confirm that the domain is `itiss.com`.
+
+## QUICK REVISION
+1. Install Windows Server and configure hostname/IP.
+2. Install AD DS and DNS roles.
+3. Promote the server → Add a new forest → `itiss.com`.
+4. Restart and verify DNS.
+5. Set the client DNS to the server's IP address.
+6. Join the client to `itiss.com`.
+7. Restart and log in using a domain account.
+
+Remember:
+- Installing AD DS adds the role.
+- Promoting the server creates the domain and makes it a Domain Controller (DC).
+- Joining the client connects it to the domain.

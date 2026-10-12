@@ -1,0 +1,183 @@
+
+
+
+
+
+
+
+
+
+
+Samba:File Share:
+`````````````````
+Ports: 139, 445
+Packages: samba samba-common samba-client
+Service: smb nmb
+Config: /etc/samba/smb.conf
+
+
+
+
+
+
+
+
+
+
+
+
+
+On Server machine:
+``````````````````
+# dnf install samba samba-common samba-client -y
+# mkdir /admin
+# touch /admin/file{1..10}.txt
+# chmod -R 755 /admin
+# chown -R nobody:nobody /admin
+
+
+
+
+
+
+
+
+
+# vim /etc/samba/smb.conf
+
+[global]
+workgroup = WORKGROUP
+
+Go to end of the file & add :
+
+[admin]
+path =  /admin
+browsable = yes
+writable = yes
+guest ok = yes
+read only = no
+:wq
+
+To check:
+``````````
+# testparm
+# systemctl start smb nmb
+# systemctl enable smb nmb
+
+# systemctl status smb nmb
+
+[+] Enable SAMBA in firewalld.
+
+[+] setenforce 0
+
+On Client:
+```````````
+# dnf install samba-client -y [ RedHat/CentOS ]
+# apt install samba-client -y [ Debian ]
+
+Access:
+````````
+# smbclient '\\192.168.206.100\admin'
+OR
+# smbclient '\\master.het.com\admin'
+
+Enter WORKGROUP\root's password: [just hit enter]
+Anonymous login successful
+smb: \> ls
+smb: \> exit
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+____________
+Secure Samba Share Directory:
+`````````````````````````````
+
+# groupadd smb_group
+# useradd -G smb_group smbuser
+# smbpasswd -a smbuser
+# chmod -R 770 /admin
+# chown -R root:smb_group /admin
+
+Add these lines to define to secure samba share in smb.conf.
+
+[admin]
+path = /admin
+valid users = @smb_group
+guest ok = no
+writable = no
+browsable = yes
+
+# systemctl restart smb nmb
+
+________________
+Client:
+`````````
+# dnf install samba-client -y [RedHat/CentOS]
+# apt install samba-client -y [Debian]
+# smbclient '\\192.168.206.140\admin' -U smbuser
+
+smb: \> get filename.txt
+smb: \> put local_file.txt
+smb: \> recurse ON
+smb: \> prompt OFF
+smb: \> mput *.pdf
+
+
+
+
+Permanent Mount:
+`````````````````
+Step 1: Install Required Packages 
+(Common Internet File System - cifs) 
+# dnf install cifs-utils -y
+
+Step 2: Create a Mount Point 
+# mkdir -p /mnt/smbshare
+
+Step 4: Mount Automatically at Boot (Permanent) 
+# vim /etc/fstab
+
+//192.168.1.101/sharename /mnt/smbshare cifs defaults,username=user,password=pass 0 0
+
+:wq
+
+# systemctl daemon-reload
+# mount -a
+
+
+
+Windows:
+`````````
+1) Open RUN
+
+win + r
+
+2) \\server'sIP\admin
+
+username: user
+password: ******
+

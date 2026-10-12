@@ -1,0 +1,105 @@
+squid
+-------\
+Squid is caching and forwarding HTTP web proxy. Which is used to speed up a web server by caching repeated requests, caching web, DNS and filtering traffic.
+
+
+# dnf install squid -y [RHEL/CentOS]
+# apt install squid -y [Debian]
+
+
+# systemctl restart squid
+# systemctl enable squid
+
+Port : 3128
+
+# firewall-cmd --zone=public --add-service=squid --permanent
+# firewall-cmd --reload
+
+
+ACL RULEs:
+``````````
+http_access: Allow/Deny HTTP clients (browsers) to access the HTTP port. This is the primary access control list.
+
+http_reply_access: Allow/Deny HTTP clients (browsers) to receive the reply to their request. This further restricts permissions given by http_access.
+
+
+# vim /etc/squid/squid.conf
+
+Test the syntax of squid.conf:
+# squid -k parse
+
+# ls /var/log/squid
+
+
+# systemctl restart squid
+OR
+# systemctl reload squid
+OR
+We can reload squid configuration file without restarting service:
+
+# squid -k reconfigure
+
+
+
+
+
+
+
+
+
+
+
++++Allow local network
+
+# vim /etc/squid/squid.conf
+
+acl internet_allow src 192.168.206.151/24
+http_access allow internet_allow
+
+OR
+
+acl internet_allow src 192.168.206.0/24
+http_access allow internet_allow
+
+
+
+
+++++ Block IP 
+
+acl banned1 src 172.18.90.100/32
+http_access deny banned1
+http_reply_access deny banned1 
+
+
+
+
+
+
+
+
+
+We will block domains such as facebook.com and youtube.com
+
+# vim /etc/squid/squid.conf 
+add lines:
+``````````
+acl blocksite1 dstdomain .facebook.com .youtube.com
+http_access deny blocksite1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

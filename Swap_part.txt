@@ -1,0 +1,30 @@
+# 1. Check current RAM and swap
+free -mh
+
+# 2. Identify the new disk
+lsblk
+
+# 3. Create a partition on the new 5 GB disk
+fdisk /dev/nvme0n3
+# Inside fdisk:
+# n → p → Enter → Enter → Enter → t → 82 → w
+
+# 4. Reload the partition table
+partprobe /dev/nvme0n3
+
+# 5. Initialize the new partition as swap
+mkswap /dev/nvme0n3p1
+
+# 6. Edit fstab to enable swap automatically at boot
+vim /etc/fstab
+# Add this line:
+# /dev/nvme0n3p1 none swap defaults 0 0
+# Save and exit: Esc → :wq → Enter
+
+# 7. Reload systemd and activate swap
+systemctl daemon-reload
+swapon -a
+
+# 8. Verify
+swapon --show
+free -mh

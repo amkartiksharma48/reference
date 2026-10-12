@@ -1,0 +1,97 @@
+# GPO Practical: Set Desktop Wallpaper for a Client User
+
+## 1. Create the wallpaper folder
+On the Windows Server, create a folder named `C:\GPO-WALLPAPER` and place the wallpaper image inside it (e.g., `wallpaper.png`).
+
+## 2. Share the folder
+1. Right-click `C:\GPO-WALLPAPER` → Properties.
+2. Open the Sharing tab → Advanced Sharing.
+3. Tick **Share this folder**.
+4. Set the share name to `GPO-WALLPAPER`.
+5. Click Permissions and grant the intended domain users Read access.
+6. Click Apply → OK.
+7. Ensure the Security tab (NTFS permissions) also allows those users to read the image.
+
+## 3. Find and test the UNC path
+The UNC path follows this format:
+`\\ServerName\ShareName\ImageName`
+
+For our lab, if the server is `MASTER`, the share name is `GPO-WALLPAPER`, and the file is `wallpaper.png`, the full path is:
+
+`\\MASTER\GPO-WALLPAPER\wallpaper.png`
+
+On the Windows client:
+1. Press Win + R.
+2. Enter the UNC path above.
+3. Press Enter.
+4. Confirm that the image opens. If it does not, check network connectivity, sharing permissions, and the actual file extension.
+
+## 4. Open Group Policy Management
+On the Windows Server:
+1. Press Win + R.
+2. Type `gpmc.msc` and press Enter.
+3. Expand Forest → Domains → `itiss.com`.
+
+## 5. Create and link a GPO
+1. Right-click `itiss.com`.
+2. Select **Create a GPO in this domain, and Link it here...**
+3. Name it `Wallpaper policy 1`.
+4. Click OK.
+
+## 6. Configure the wallpaper policy
+1. Right-click `Wallpaper policy 1` → Edit.
+2. Navigate to:
+
+`User Configuration → Policies → Administrative Templates → Desktop → Desktop`
+
+3. Double-click **Desktop Wallpaper**.
+4. Select **Enabled**.
+5. In Wallpaper Name, enter the full UNC path:
+
+`\\MASTER\GPO-WALLPAPER\wallpaper.png`
+
+6. Set Wallpaper Style to **Center**.
+7. Click Apply → OK.
+
+## 7. Create a domain user
+On the Windows Server:
+1. Press Win + R and type `dsa.msc`.
+2. Expand `itiss.com` → Users.
+3. Right-click Users → New → User.
+4. Create a user, for example `clientuser`.
+5. Set a password and finish the wizard.
+
+If a suitable domain user already exists, use that account instead.
+
+## 8. Log in to the client using the domain user
+On the Windows client, sign out of the current account.
+At the login screen, select Other user and enter:
+
+Username: `itiss\clientuser`
+
+Password: The password you set for that domain user.
+
+Do not use `.\client` for this test because that is a local account on the client.
+
+## 9. Apply and verify the GPO
+While logged in as the domain user, open Command Prompt and run:
+
+`gpupdate /force`
+
+Wait for it to finish, then sign out and sign in again if necessary. The configured wallpaper should appear.
+
+If the wallpaper does not change, run:
+
+`gpresult /r`
+
+Check the User Settings section to see whether `Wallpaper policy 1` was applied. Also confirm that the domain user can open the UNC path to the image.
+
+## Important points
+- A local path such as `C:\GPO-WALLPAPER\wallpaper.png` refers to a folder on the computer where it is used.
+- A UNC path such as `\\MASTER\GPO-WALLPAPER\wallpaper.png` accesses the image over the network.
+- The folder must be shared, and the user must have both share and NTFS read permissions.
+- The client must use the Windows Server's DNS for the AD domain and be able to communicate with the domain controller.
+- A GPO linked to the domain can apply to users in that domain, subject to security filtering and other policy settings.
+
+
+TO prevent someone from changing--edit the same policy and after admin templates>control panel>personalisation

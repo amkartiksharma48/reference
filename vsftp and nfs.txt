@@ -1,0 +1,221 @@
+vsFTP: Very Secure FTP
+````````````````````````
+package: vsftpd
+service: vsftpd
+Port 21: The Control Connection
+Port 20: The Data Connection
+1) Install
+# dnf install vsftpd -y
+
+2) Default DocumentRoot for public access
+# cd /var/ftp/pub
+# touch file{1..10}.txt
+
+Default DocumentRoot for users is HOME DIR of user
+
+
+3) Configuration File:
+# vim /etc/vsftpd/vsftpd.conf
+anonymous_enable = YES
+
+:wq
+
+4) Start the service:
+# systemctl restart vsftpd
+# systemctl enable vsftpd
+# systemctl is-active vsftpd
+# systemctl is-enabled vsftpd
+
+5) Firewall :
+# firewall-cmd --add-service=ftp --permanent
+# firewall-cmd --reload
+# firewall-cmdf --list-all
+-----------------
+On Client:
+
+1) Software [FileZilla]
+2) On CLI:
+Install client side tool to access ftp
+# dnf install ftp -y
+# ftp master.itiss.com
+OR
+# ftp 192.168.37.128 
+
+=> For anonymous login, the user is `ftp` and no password
+=> For regular user the username is regular user & and the password for regular user is a regular password of a regular user.
+---------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Network File Share:
+```````````````````
+Port 		: 2049/tcp
+Package		: nfs-utils
+Service		: nfs-server
+Service Acc	: nfsnobody
+Config		: /etc/exports
+
+`````````````````````````````
+ON SERVER:
+``````````
+1) Install
+``````````
+# dnf install nfs-utils -y
+
+2) 
+
+# mkdir /data
+# touch /data/file{1..10}.txt
+# chmod 770 /data -R
+
+3) Configure NFS server to share directory:
+
+$ sudo vim /etc/exports
+
+FULL_DIR_PATH	x.x.x.x(rw,sync,no_root_squash,no_subtree_check)
+
+| x.x.x.x : Share the NFS DIR to an IP only
+| ro 	  : Read Only
+| rw	  : Read & Write
+| sync	  : Sync the data between Clients & server
+| no_root_squash : On client side ROOT user can also access NFS shared data
+| no_subtree_check : Disable sub tree check [Do not lookup parent to child]
+
+---------------OR--------------------
+FULL_DIR_PATH	x.x.x.x(rw,sync) x.x.x.x(rw,sync,no_root_squash,no_subtree_check)
+---------------OR--------------------
+FULL_DIR_PATH	192.168.206.0/24(rw,sync,no_root-squash,no_subtree_check)
+---------------OR--------------------
+FULL_DIR_PATH	192.168.206.0/24(rw,sync,no_root-squash,no_subtree_check) 10.0.0.0/16(rw,sync,no_subtree_check) 
+---------------OR--------------------
+FULL_DIR_PATH	*(rw,sync,no_subtree_check)
+
+| * : Wildcard [0.0.0.0/0] ( All networks/ANY ) 
+
+e) Verify the NFS Shared dir is shared or not:
+
+- Restart NFS service
+
+$ sudo systemctl restart nfs-server
+systemctl enable nfs-server
+$ sudo systemctl status nfs-server
+
+**ADD ON FIREWALL AS WELL**
+
+
+- Verify the shared content via NFS:
+
+$ sudo exportfs -a
+
+
+
+______________________________________
+On Client 
+``````````
+# dnf install nfs-utils -y  [CentOS]
+# apt install nfs-common -y [Debian]
+
+TEMP MOUNTING:
+``````````````
+# mount -t nfs 192.168.1.254:/data /mnt
+
+-t  : type of filesystem
+192.168.1.254 : NFS server IP
+
+# df -h
+
+# umount /mnt
+
+Mounting permanently
+````````````````````
+# vim /etc/fstab
+
+192.168.1.254:/data 	/mnt 	nfs   defaults   0  0
+
+:wq
+
+# mount -a
+# df -h
+
+

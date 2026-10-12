@@ -1,0 +1,118 @@
+# DHCP Configuration on Windows Server
+
+## 1. Install DHCP Server Role
+1. Open **Server Manager → Manage → Add Roles and Features**.
+2. Select **Role-based or feature-based installation**.
+3. Select the server.
+4. Under Server Roles, select **DHCP Server**.
+5. Click **Add Features → Next → Install**.
+
+## 2. Complete DHCP Post-Installation Configuration
+1. Open **Server Manager → Notifications (flag) → Complete DHCP configuration**.
+2. Click **Next**.
+3. Select **Use the following user's credentials**.
+4. Use the domain Administrator account (`ITISS\Administrator`).
+5. Click **Commit → Close**.
+6. If prompted, restart the DHCP Server service so the new security groups take effect.
+
+## 3. Create a DHCP Scope
+1. Open **Server Manager → Tools → DHCP**.
+2. Expand the server and right-click **IPv4 → New Scope**.
+3. Enter a scope name, e.g. `DHCP-LAB`.
+
+## 4. Configure IP Address Range
+Enter the following details:
+
+- Start IP: `192.168.178.100`
+- End IP: `192.168.178.200`
+- Subnet mask: `255.255.255.0`
+
+Click **Next**.
+
+## 5. Configure Exclusions
+Skip the exclusions page if no exclusions are required. Click **Next**.
+
+## 6. Configure Lease Duration
+Keep the default lease duration of 8 days. Click **Next**.
+
+## 7. Configure DHCP Options
+Select **Yes, I want to configure these options now** and click **Next**.
+
+## 8. Configure Default Gateway
+In the Router (Default Gateway) window:
+
+- Enter `192.168.178.2` (verify this is the VMware NAT gateway).
+- Click **Add → Next**.
+
+## 9. Configure DNS Servers
+In the Domain Name and DNS Servers window:
+
+- Parent domain: `itiss.com`
+- Server name: `MASTER`
+- Click **Resolve**.
+- Verify the IP address is `192.168.178.10`.
+- Click **Add → Next**.
+
+The full DNS name of the server is `MASTER.itiss.com`. Using `MASTER` in the Server name field is fine if it resolves correctly.
+
+## 10. Skip WINS
+On the WINS Servers page, do not enter anything. Click **Next**.
+
+## 11. Activate the Scope
+1. Select **Yes, I want to activate this scope now**.
+2. Click **Next → Finish**.
+
+## 12. Disable VMware DHCP
+1. On the host PC, open **VMware Workstation → Edit → Virtual Network Editor**.
+2. Select **VMnet8**.
+3. Uncheck **Use local DHCP service to distribute IP address to VMs**.
+4. Click **Apply → OK**.
+5. Keep NAT enabled.
+
+Both VMs must be connected to the same virtual network.
+
+## 13. Configure the Client
+1. On the Windows Client, open **Control Panel → Network and Sharing Center → Change adapter settings**.
+2. Right-click Ethernet → Properties.
+3. Select **Internet Protocol Version 4 (TCP/IPv4) → Properties**.
+4. Select:
+   - Obtain an IP address automatically.
+   - Obtain DNS server address automatically.
+5. Click OK.
+
+## 14. Renew and Verify the Client IP
+Open Command Prompt as Administrator on the client and run:
+
+```cmd
+ipconfig /release
+ipconfig /renew
+ipconfig /all
+```
+
+The client should receive an IP from the configured DHCP range.
+
+## 15. Verify the DHCP Lease
+On Windows Server, open:
+
+**Server Manager → Tools → DHCP → IPv4 → Scope → Address Leases**
+
+Confirm that the client appears in the list.
+
+Test connectivity from the client:
+
+```cmd
+ping 192.168.178.10
+```
+
+## Important Configuration Details
+
+- Server name: `MASTER`
+- Domain: `itiss.com`
+- Server static IP: `192.168.178.10`
+- Network: `192.168.178.0/24`
+- Subnet mask: `255.255.255.0`
+- Example gateway: `192.168.178.2` (verify in VMware)
+- DHCP pool: `192.168.178.100–192.168.178.200`
+- DNS server: `192.168.178.10` (if DNS is running on the server)
+
+**Sequence:** Install DHCP → Complete post-installation configuration → Create scope → Configure IP range → Gateway → DNS → Skip WINS → Activate scope → Disable VMware DHCP → Set client to automatic IP → Release/Renew → Verify lease.

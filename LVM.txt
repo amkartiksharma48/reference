@@ -1,0 +1,57 @@
+
+# 1. Create partition
+fdisk /dev/nvme0n4
+# Inside fdisk: n -> p -> 1 -> Enter -> Enter -> t -> 8e -> w
+
+partprobe /dev/nvme0n4
+
+# 2. Create Physical Volume (PV)
+pvcreate /dev/nvme0n4p1
+pvs
+
+# 3. Create Volume Group (VG)
+# Choose ONE method only:
+
+# Method A: Default extent size
+vgcreate vgdata /dev/nvme0n4p1
+
+# Method B: Custom extent size of 8 MiB
+# Use this INSTEAD of Method A, not after it:
+# vgcreate -s 8M vgdata /dev/nvme0n4p1
+
+vgs
+
+# 4. Create Logical Volumes (LVs)
+# Method A: Specify size
+lvcreate -L 595M -n lvdata vgdata
+
+# Method B: Specify extent count
+lvcreate -l 30 -n lvdata2 vgdata
+
+lvs
+
+# 5. Format the logical volumes
+mkfs.ext4 /dev/vgdata/lvdata
+mkfs.vfat /dev/vgdata/lvdata2
+
+# 6. Create mount points
+mkdir /data3
+mkdir /data4
+
+# 7. Mount the logical volumes
+mount /dev/vgdata/lvdata /data3
+mount /dev/vgdata/lvdata2 /data4
+
+# 8. Configure permanent mounting
+vim /etc/fstab
+
+# Add these lines inside /etc/fstab:
+# /dev/vgdata/lvdata   /data3   ext4   defaults   0 0
+# /dev/vgdata/lvdata2  /data4   vfat   defaults   0 0
+
+# Save and exit vim, then run:
+systemctl daemon-reload
+mount -a
+
+# 9. Verify
+df -hT
